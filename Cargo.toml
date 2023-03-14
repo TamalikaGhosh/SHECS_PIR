@@ -1,0 +1,11 @@
+[package]
+name = "shecs_pir"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+panacea = { git = "https://github.com/KULeuven-COSIC/Panacea.git" }
+concrete-core = { version = "1.0.2", features = ["x86_64", "__private_docs"] }
+concrete-csprng = { version = "0.2.2", features = ["x86_64"] }
