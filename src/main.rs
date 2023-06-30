@@ -10,6 +10,7 @@ use panacea::rgsw::*;
 use std::collections::HashMap;
 use std::time::Instant;
 use std::io;
+use rand::Rng;
 
 struct Queue<T> {
     queue: Vec<T>,
@@ -183,6 +184,18 @@ fn evaluation(id_ctx: &Vec<RGSWCiphertext>, enc_db: &Vec<RLWECiphertext>, N: usi
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+fn compute_noise_rgsw0(sk: &RLWESecretKey, ct: &RGSWCiphertext, ctx: &Context) -> f64 {
+    let mut total_noise = 0f64;
+    for level in 0..ctx.level_count.0 {
+        //let shift = (Scalar::BITS as usize) - ctx.base_log.0 * (level + 1);
+        let mut pt = ctx.gen_zero_pt();
+        //mul_const(&mut pt.as_mut_tensor(), 1 << shift);
+        let noise = compute_noise(sk, &ct.get_nth_row(level * 2 + 1), &pt);
+        total_noise += noise;
+    }
+    return total_noise / ctx.level_count.0 as f64;
+}
+//----------------------------------------------------------------------------------------------------------------------------------
 // Function to check the generated RGSWs
 fn check(gsw_ct: &RGSWCiphertext, sk: &RLWESecretKey, ctx: &mut Context){
     
@@ -307,15 +320,26 @@ fn main() {
     //println!("---------------------------------");
     //println!("Noise of each RGSW:");
     
+    let mut id_dummy = id;
     let mut max = 0.0;
-    for i in 0..n{
-        if compute_noise_rgsw1(&sk, &id_ctx[i], &ctx)>max{
-            max = compute_noise_rgsw1(&sk, &id_ctx[i], &ctx);
-        }
-        //println!("Noise of e_{}: {:?}",i, compute_noise_rgsw1(&sk, &id_ctx[i], &ctx));
-    }  
-    println!("Maximum noise of RGSW coefficients: {}", max);
     
+    for i in 0..n{
+    
+        if id_dummy & 1 == 1{
+            if compute_noise_rgsw1(&sk, &id_ctx[i], &ctx)>max{
+                max = compute_noise_rgsw1(&sk, &id_ctx[i], &ctx);
+            }
+        }
+        else{
+            if compute_noise_rgsw0(&sk, &id_ctx[i], &ctx)>max{
+                max = compute_noise_rgsw0(&sk, &id_ctx[i], &ctx);
+            }  
+        } 
+        id_dummy = id_dummy>>1; 
+    }
+    
+    println!("Maximum noise of RGSW coefficients: {}", max);
+
     /*
     for i in 0..n{
         println!("------------------ {}th bit -----------------",i);
