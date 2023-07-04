@@ -11,7 +11,7 @@ use panacea::rgsw::*;
 use std::collections::HashMap;
 use std::time::Instant;
 use std::io;
-use rand::Rng;
+
 
 struct Queue<T> {
     queue: Vec<T>,
